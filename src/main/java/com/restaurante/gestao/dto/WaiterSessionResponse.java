@@ -1,12 +1,18 @@
 package com.restaurante.gestao.dto;
 
+import com.restaurante.gestao.model.SessionStatus;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
-public record CashierSessionResponse(
+public record WaiterSessionResponse(
         Long sessionId,
         Integer tableNumber,
+        SessionStatus status,
         Boolean waiterFinalized,
+        LocalDateTime openedAt,
+        LocalDateTime closedAt,
         BigDecimal total,
         List<OrderTicketResponse> items
 ) {

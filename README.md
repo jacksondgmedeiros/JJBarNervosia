@@ -2,9 +2,10 @@
 
 Sistema simples em Java/Spring Boot para:
 
-- Garçom lançar pedidos por mesa.
-- Cozinha visualizar fila de preparo e atualizar status.
-- Caixa acompanhar comandas abertas e fechar comanda.
+- Garçom lançar pedidos por mesa usando **somente produtos do estoque**.
+- Cozinha visualizar fila de preparo e atualizar status (em fila/preparando/concluído).
+- Caixa acompanhar comandas abertas e fechar apenas as que o garçom finalizou.
+- Responsável de estoque cadastrar produtos e valores por categoria.
 
 ## Stack
 
@@ -22,6 +23,16 @@ mvn spring-boot:run
 
 Abra: `http://localhost:8080`
 
+### Como parar a execução
+
+No terminal onde o app está rodando, pressione:
+
+```bash
+Ctrl + C
+```
+
+## Banco H2
+
 Console H2: `http://localhost:8080/h2-console`
 
 - JDBC URL: `jdbc:h2:mem:restaurante`
@@ -30,7 +41,10 @@ Console H2: `http://localhost:8080/h2-console`
 
 ## Fluxo implementado
 
-1. Garçom lança pedido da mesa (cada lançamento gera um ticket para a cozinha).
-2. Se a mesa pedir mais itens, o garçom lança novamente e os itens são adicionados na mesma comanda aberta.
-3. Cozinha vê pedidos pendentes/em preparo e marca como concluídos.
-4. Caixa visualiza a comanda consolidada por mesa e fecha quando necessário.
+1. O responsável de estoque cadastra produtos com categoria e valor (há carga inicial para testes).
+2. O garçom lança pedidos por mesa escolhendo itens do estoque.
+3. O garçom acompanha comandas em aberto com status dos pedidos (em fila/preparando/concluído).
+4. Quando solicitado pelo cliente, o garçom finaliza a comanda e envia para o caixa.
+5. O caixa só consegue fechar comandas finalizadas pelo garçom.
+6. Antes de fechar, o caixa abre um resumo detalhado da comanda com quantidade, descrição, valor unitário e total final.
+7. O garçom consulta o histórico diário de comandas para facilitar visualização.
