@@ -1,9 +1,6 @@
 package com.restaurante.gestao.controller;
 
-import com.restaurante.gestao.dto.CashierSessionResponse;
-import com.restaurante.gestao.dto.CreateOrderRequest;
-import com.restaurante.gestao.dto.OrderTicketResponse;
-import com.restaurante.gestao.dto.UpdateKitchenStatusRequest;
+import com.restaurante.gestao.dto.*;
 import com.restaurante.gestao.service.RestaurantService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +22,32 @@ public class ApiController {
     @PostMapping("/orders")
     public ResponseEntity<OrderTicketResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         return ResponseEntity.ok(restaurantService.createOrder(request));
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<List<ProductResponse>> listProducts() {
+        return ResponseEntity.ok(restaurantService.listActiveProducts());
+    }
+
+    @PostMapping("/products")
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
+        return ResponseEntity.ok(restaurantService.createProduct(request));
+    }
+
+    @GetMapping("/waiter/sessions/open")
+    public ResponseEntity<List<WaiterSessionResponse>> waiterOpenSessions() {
+        return ResponseEntity.ok(restaurantService.listOpenSessionsForWaiter());
+    }
+
+    @GetMapping("/waiter/sessions/history/today")
+    public ResponseEntity<List<WaiterSessionResponse>> waiterHistoryToday() {
+        return ResponseEntity.ok(restaurantService.listTodayHistoryForWaiter());
+    }
+
+    @PatchMapping("/waiter/sessions/{sessionId}/finalize")
+    public ResponseEntity<Map<String, String>> finalizeForCashier(@PathVariable Long sessionId) {
+        restaurantService.finalizeForCashier(sessionId);
+        return ResponseEntity.ok(Map.of("message", "Comanda enviada para o caixa"));
     }
 
     @GetMapping("/kitchen/orders")

@@ -17,6 +17,10 @@ public class OrderTicket {
     @JoinColumn(name = "session_id", nullable = false)
     private TableSession session;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
+
     @Column(nullable = false)
     private String itemName;
 
@@ -41,6 +45,10 @@ public class OrderTicket {
     public TableSession getSession() { return session; }
 
     public void setSession(TableSession session) { this.session = session; }
+
+    public Product getProduct() { return product; }
+
+    public void setProduct(Product product) { this.product = product; }
 
     public String getItemName() { return itemName; }
 

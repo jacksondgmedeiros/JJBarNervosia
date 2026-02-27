@@ -20,7 +20,12 @@ public class TableSession {
     private SessionStatus status = SessionStatus.OPEN;
 
     @Column(nullable = false)
+    private Boolean waiterFinalized = false;
+
+    @Column(nullable = false)
     private LocalDateTime openedAt = LocalDateTime.now();
+
+    private LocalDateTime closedAt;
 
     public Long getId() { return id; }
 
@@ -32,5 +37,13 @@ public class TableSession {
 
     public void setStatus(SessionStatus status) { this.status = status; }
 
+    public Boolean getWaiterFinalized() { return waiterFinalized; }
+
+    public void setWaiterFinalized(Boolean waiterFinalized) { this.waiterFinalized = waiterFinalized; }
+
     public LocalDateTime getOpenedAt() { return openedAt; }
+
+    public LocalDateTime getClosedAt() { return closedAt; }
+
+    public void setClosedAt(LocalDateTime closedAt) { this.closedAt = closedAt; }
 }
