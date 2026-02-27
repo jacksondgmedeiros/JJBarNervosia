@@ -6,6 +6,9 @@ import java.util.List;
 public record CashierSessionResponse(
         Long sessionId,
         Integer tableNumber,
+        String customerName,
+        Long waiterId,
+        String waiterName,
         Boolean waiterFinalized,
         BigDecimal total,
         List<OrderTicketResponse> items

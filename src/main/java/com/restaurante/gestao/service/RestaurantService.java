@@ -2,6 +2,7 @@ package com.restaurante.gestao.service;
 
 import com.restaurante.gestao.dto.*;
 import com.restaurante.gestao.model.*;
+import com.restaurante.gestao.repository.AppUserRepository;
 import com.restaurante.gestao.repository.OrderTicketRepository;
 import com.restaurante.gestao.repository.ProductRepository;
 import com.restaurante.gestao.repository.TableSessionRepository;
@@ -19,17 +20,33 @@ public class RestaurantService {
     private final TableSessionRepository tableSessionRepository;
     private final OrderTicketRepository orderTicketRepository;
     private final ProductRepository productRepository;
+    private final AppUserRepository appUserRepository;
 
     public RestaurantService(TableSessionRepository tableSessionRepository,
                              OrderTicketRepository orderTicketRepository,
-                             ProductRepository productRepository) {
+                             ProductRepository productRepository,
+                             AppUserRepository appUserRepository) {
         this.tableSessionRepository = tableSessionRepository;
         this.orderTicketRepository = orderTicketRepository;
         this.productRepository = productRepository;
+        this.appUserRepository = appUserRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public AuthResponse login(LoginRequest request) {
+        AppUser user = appUserRepository.findByUsernameIgnoreCaseAndActiveTrue(request.username())
+                .orElseThrow(() -> new IllegalArgumentException("Usuário/senha inválidos"));
+
+        if (!user.getPassword().equals(request.password()) || user.getRole() != request.role()) {
+            throw new IllegalArgumentException("Usuário/senha inválidos para o setor selecionado");
+        }
+
+        return toAuthResponse(user);
     }
 
     @Transactional
-    public OrderTicketResponse createOrder(CreateOrderRequest request) {
+    public OrderTicketResponse createOrder(Long userId, CreateOrderRequest request) {
+        AppUser waiter = requireUserRole(userId, UserRole.WAITER, UserRole.ADMIN);
         Product product = productRepository.findById(request.productId())
                 .filter(Product::getActive)
                 .orElseThrow(() -> new IllegalArgumentException("Produto de estoque não encontrado"));
@@ -39,6 +56,9 @@ public class RestaurantService {
                 .orElseGet(() -> {
                     TableSession newSession = new TableSession();
                     newSession.setTableNumber(request.tableNumber());
+                    newSession.setCustomerName(request.customerName().trim());
+                    newSession.setWaiterId(waiter.getId());
+                    newSession.setWaiterName(waiter.getFullName());
                     return tableSessionRepository.save(newSession);
                 });
 
@@ -58,7 +78,8 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProductResponse> listActiveProducts() {
+    public List<ProductResponse> listActiveProducts(Long userId) {
+        requireActiveUser(userId);
         return productRepository.findByActiveTrueOrderByCategoryAscNameAsc()
                 .stream()
                 .map(this::toResponse)
@@ -66,7 +87,8 @@ public class RestaurantService {
     }
 
     @Transactional
-    public ProductResponse createProduct(ProductRequest request) {
+    public ProductResponse createProduct(Long userId, ProductRequest request) {
+        requireUserRole(userId, UserRole.STOCK, UserRole.ADMIN);
         Product product = new Product();
         product.setName(request.name());
         product.setCategory(request.category());
@@ -75,8 +97,29 @@ public class RestaurantService {
         return toResponse(productRepository.save(product));
     }
 
+    @Transactional
+    public ProductResponse updateProduct(Long userId, Long productId, ProductRequest request) {
+        requireUserRole(userId, UserRole.STOCK, UserRole.ADMIN);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
+        product.setName(request.name());
+        product.setCategory(request.category());
+        product.setUnitPrice(request.unitPrice());
+        return toResponse(productRepository.save(product));
+    }
+
+    @Transactional
+    public void deleteProduct(Long userId, Long productId) {
+        requireUserRole(userId, UserRole.STOCK, UserRole.ADMIN);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado"));
+        product.setActive(false);
+        productRepository.save(product);
+    }
+
     @Transactional(readOnly = true)
-    public List<OrderTicketResponse> listKitchenTickets() {
+    public List<OrderTicketResponse> listKitchenTickets(Long userId) {
+        requireUserRole(userId, UserRole.KITCHEN, UserRole.ADMIN);
         return orderTicketRepository
                 .findByKitchenStatusInOrderByCreatedAtAsc(List.of(KitchenStatus.PENDING, KitchenStatus.PREPARING))
                 .stream()
@@ -85,7 +128,8 @@ public class RestaurantService {
     }
 
     @Transactional
-    public OrderTicketResponse updateKitchenStatus(Long ticketId, KitchenStatus status) {
+    public OrderTicketResponse updateKitchenStatus(Long userId, Long ticketId, KitchenStatus status) {
+        requireUserRole(userId, UserRole.KITCHEN, UserRole.ADMIN);
         OrderTicket ticket = orderTicketRepository.findById(ticketId)
                 .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
         ticket.setKitchenStatus(status);
@@ -93,19 +137,30 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public List<CashierSessionResponse> listOpenSessionsForCashier() {
+    public List<CashierSessionResponse> listOpenSessionsForCashier(Long userId) {
+        requireUserRole(userId, UserRole.CASHIER, UserRole.ADMIN);
         return tableSessionRepository.findByStatusOrderByOpenedAtAsc(SessionStatus.OPEN)
                 .stream()
                 .map(session -> {
                     List<OrderTicketResponse> items = listSessionItems(session);
                     BigDecimal total = sumItems(items);
-                    return new CashierSessionResponse(session.getId(), session.getTableNumber(), session.getWaiterFinalized(), total, items);
+                    return new CashierSessionResponse(
+                            session.getId(),
+                            session.getTableNumber(),
+                            session.getCustomerName(),
+                            session.getWaiterId(),
+                            session.getWaiterName(),
+                            session.getWaiterFinalized(),
+                            total,
+                            items
+                    );
                 })
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<WaiterSessionResponse> listOpenSessionsForWaiter() {
+    public List<WaiterSessionResponse> listOpenSessionsForWaiter(Long userId) {
+        requireUserRole(userId, UserRole.WAITER, UserRole.ADMIN);
         return tableSessionRepository.findByStatusOrderByOpenedAtAsc(SessionStatus.OPEN)
                 .stream()
                 .map(this::toWaiterSessionResponse)
@@ -113,7 +168,8 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public List<WaiterSessionResponse> listTodayHistoryForWaiter() {
+    public List<WaiterSessionResponse> listTodayHistoryForWaiter(Long userId) {
+        requireUserRole(userId, UserRole.WAITER, UserRole.ADMIN);
         LocalDateTime start = LocalDate.now().atStartOfDay();
         LocalDateTime end = start.plusDays(1);
 
@@ -124,7 +180,8 @@ public class RestaurantService {
     }
 
     @Transactional
-    public void finalizeForCashier(Long sessionId) {
+    public void finalizeForCashier(Long userId, Long sessionId) {
+        requireUserRole(userId, UserRole.WAITER, UserRole.ADMIN);
         TableSession session = tableSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Comanda não encontrada"));
         if (session.getStatus() != SessionStatus.OPEN) {
@@ -135,7 +192,8 @@ public class RestaurantService {
     }
 
     @Transactional
-    public void closeSession(Long sessionId) {
+    public void closeSession(Long userId, Long sessionId) {
+        requireUserRole(userId, UserRole.CASHIER, UserRole.ADMIN);
         TableSession session = tableSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Comanda não encontrada"));
         if (!Boolean.TRUE.equals(session.getWaiterFinalized())) {
@@ -146,6 +204,60 @@ public class RestaurantService {
         tableSessionRepository.save(session);
     }
 
+    @Transactional(readOnly = true)
+    public List<UserResponse> listUsers(Long userId) {
+        requireUserRole(userId, UserRole.ADMIN);
+        return appUserRepository.findByActiveTrueOrderByRoleAscFullNameAsc().stream()
+                .map(this::toUserResponse)
+                .toList();
+    }
+
+    @Transactional
+    public UserResponse createUser(Long userId, UserRequest request) {
+        requireUserRole(userId, UserRole.ADMIN);
+        if (appUserRepository.existsByUsernameIgnoreCase(request.username())) {
+            throw new IllegalArgumentException("Já existe usuário com esse login");
+        }
+
+        AppUser user = new AppUser();
+        user.setFullName(request.fullName());
+        user.setUsername(request.username());
+        user.setPassword(request.password());
+        user.setRole(request.role());
+        user.setActive(true);
+
+        return toUserResponse(appUserRepository.save(user));
+    }
+
+    @Transactional
+    public UserResponse updateUser(Long requesterId, Long userId, UserRequest request) {
+        requireUserRole(requesterId, UserRole.ADMIN);
+
+        AppUser user = appUserRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+
+        if (!user.getUsername().equalsIgnoreCase(request.username())
+                && appUserRepository.existsByUsernameIgnoreCase(request.username())) {
+            throw new IllegalArgumentException("Já existe usuário com esse login");
+        }
+
+        user.setFullName(request.fullName());
+        user.setUsername(request.username());
+        user.setPassword(request.password());
+        user.setRole(request.role());
+        user.setActive(true);
+        return toUserResponse(appUserRepository.save(user));
+    }
+
+    @Transactional
+    public void deleteUser(Long requesterId, Long userId) {
+        requireUserRole(requesterId, UserRole.ADMIN);
+        AppUser user = appUserRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado"));
+        user.setActive(false);
+        appUserRepository.save(user);
+    }
+
     private WaiterSessionResponse toWaiterSessionResponse(TableSession session) {
         List<OrderTicketResponse> items = listSessionItems(session);
         BigDecimal total = sumItems(items);
@@ -153,6 +265,9 @@ public class RestaurantService {
         return new WaiterSessionResponse(
                 session.getId(),
                 session.getTableNumber(),
+                session.getCustomerName(),
+                session.getWaiterId(),
+                session.getWaiterName(),
                 session.getStatus(),
                 session.getWaiterFinalized(),
                 session.getOpenedAt(),
@@ -197,5 +312,29 @@ public class RestaurantService {
                 product.getUnitPrice(),
                 product.getActive()
         );
+    }
+
+    private AuthResponse toAuthResponse(AppUser user) {
+        return new AuthResponse(user.getId(), user.getFullName(), user.getUsername(), user.getRole());
+    }
+
+    private UserResponse toUserResponse(AppUser user) {
+        return new UserResponse(user.getId(), user.getFullName(), user.getUsername(), user.getRole(), user.getActive());
+    }
+
+    private AppUser requireActiveUser(Long userId) {
+        return appUserRepository.findById(userId)
+                .filter(AppUser::getActive)
+                .orElseThrow(() -> new IllegalArgumentException("Usuário não autenticado"));
+    }
+
+    private AppUser requireUserRole(Long userId, UserRole... allowedRoles) {
+        AppUser user = requireActiveUser(userId);
+        for (UserRole allowedRole : allowedRoles) {
+            if (user.getRole() == allowedRole) {
+                return user;
+            }
+        }
+        throw new IllegalArgumentException("Seu perfil não tem permissão para esta ação");
     }
 }
