@@ -15,6 +15,15 @@ public class TableSession {
     @Column(nullable = false)
     private Integer tableNumber;
 
+    @Column(nullable = false)
+    private String customerName;
+
+    @Column(nullable = false)
+    private Long waiterId;
+
+    @Column(nullable = false)
+    private String waiterName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SessionStatus status = SessionStatus.OPEN;
@@ -32,6 +41,30 @@ public class TableSession {
     public Integer getTableNumber() { return tableNumber; }
 
     public void setTableNumber(Integer tableNumber) { this.tableNumber = tableNumber; }
+
+    public String getCustomerName() {
+        return customerName;
+    }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public Long getWaiterId() {
+        return waiterId;
+    }
+
+    public void setWaiterId(Long waiterId) {
+        this.waiterId = waiterId;
+    }
+
+    public String getWaiterName() {
+        return waiterName;
+    }
+
+    public void setWaiterName(String waiterName) {
+        this.waiterName = waiterName;
+    }
 
     public SessionStatus getStatus() { return status; }
 

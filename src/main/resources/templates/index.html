@@ -8,101 +8,174 @@
 </head>
 <body class="bg-light">
 <div class="container py-4">
-    <h1 class="mb-4">Sistema simples de restaurante</h1>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Gestão de Restaurante</h1>
+        <div id="sessionInfo" class="text-end"></div>
+    </div>
 
-    <ul class="nav nav-tabs" id="rolesTab" role="tablist">
-        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#waiter">Garçom</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#kitchen">Cozinha</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#cashier">Caixa</button></li>
-        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#stock">Estoque</button></li>
-    </ul>
-
-    <div class="tab-content border border-top-0 rounded-bottom bg-white p-3">
-        <div class="tab-pane fade show active" id="waiter">
-            <h4>Lançar pedido da mesa</h4>
-            <form id="orderForm" class="row g-3">
-                <div class="col-md-2">
-                    <label class="form-label">Mesa</label>
-                    <input type="number" min="1" class="form-control" id="tableNumber" required>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Produto em estoque</label>
-                    <select class="form-select" id="productSelect" required></select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Quantidade</label>
-                    <input type="number" min="1" value="1" class="form-control" id="quantity" required>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Preço unit.</label>
-                    <input type="text" class="form-control" id="unitPricePreview" readonly>
-                </div>
-                <div class="col-md-8">
-                    <label class="form-label">Observações</label>
-                    <input type="text" class="form-control" id="notes" placeholder="Sem cebola, ponto da carne...">
-                </div>
-                <div class="col-12">
-                    <button class="btn btn-primary" type="submit">Enviar para cozinha</button>
-                </div>
-            </form>
-            <div id="waiterFeedback" class="mt-3"></div>
-
-            <hr>
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0">Comandas em aberto</h5>
-                <button class="btn btn-outline-secondary btn-sm" onclick="loadWaiterOpenSessions()">Atualizar</button>
-            </div>
-            <div id="waiterOpenSessions" class="row g-3 mb-4"></div>
-
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h5 class="mb-0">Histórico do dia</h5>
-                <button class="btn btn-outline-secondary btn-sm" onclick="loadWaiterHistory()">Atualizar</button>
-            </div>
-            <div id="waiterHistory" class="row g-3"></div>
-        </div>
-
-        <div class="tab-pane fade" id="kitchen">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h4 class="mb-0">Fila da cozinha</h4>
-                <button class="btn btn-outline-secondary btn-sm" onclick="loadKitchen()">Atualizar</button>
-            </div>
-            <div id="kitchenList" class="row g-3"></div>
-        </div>
-
-        <div class="tab-pane fade" id="cashier">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <h4 class="mb-0">Comandas aguardando caixa</h4>
-                <button class="btn btn-outline-secondary btn-sm" onclick="loadCashier()">Atualizar</button>
-            </div>
-            <div id="cashierList" class="row g-3"></div>
-        </div>
-
-        <div class="tab-pane fade" id="stock">
-            <h4>Cadastro de produtos em estoque</h4>
-            <form id="stockForm" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Nome do produto</label>
-                    <input type="text" class="form-control" id="stockName" required>
-                </div>
+    <div id="loginCard" class="card shadow-sm">
+        <div class="card-body">
+            <h4 class="mb-3">Login por setor</h4>
+            <form id="loginForm" class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label">Categoria</label>
-                    <select class="form-select" id="stockCategory" required>
-                        <option value="BEBIDAS">Bebidas</option>
-                        <option value="REFEICOES">Refeições</option>
-                        <option value="LANCHES">Lanches</option>
-                        <option value="SOBREMESAS">Sobremesas</option>
+                    <label class="form-label">Setor</label>
+                    <select id="loginRole" class="form-select" required>
+                        <option value="WAITER">Garçom</option>
+                        <option value="KITCHEN">Cozinha</option>
+                        <option value="CASHIER">Caixa</option>
+                        <option value="STOCK">Estoque</option>
+                        <option value="ADMIN">Administrador</option>
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Preço unitário</label>
-                    <input type="number" step="0.01" min="0.01" class="form-control" id="stockPrice" required>
+                <div class="col-md-3">
+                    <label class="form-label">Usuário</label>
+                    <input id="loginUsername" class="form-control" required>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button class="btn btn-success" type="submit">Cadastrar produto</button>
+                <div class="col-md-3">
+                    <label class="form-label">Senha</label>
+                    <input id="loginPassword" type="password" class="form-control" required>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button class="btn btn-primary w-100" type="submit">Entrar</button>
                 </div>
             </form>
-            <div id="stockFeedback" class="mt-3"></div>
-            <div class="mt-3" id="stockList"></div>
+            <div id="loginFeedback" class="mt-3"></div>
+            <p class="mt-3 mb-0 text-muted small">Usuários padrão: admin/admin123, garcom/123, cozinha/123, caixa/123, estoque/123.</p>
+        </div>
+    </div>
+
+    <div id="appCard" class="d-none">
+        <ul class="nav nav-tabs" id="rolesTab" role="tablist">
+            <li class="nav-item"><button class="nav-link" id="tabBtn-waiter" data-bs-toggle="tab" data-bs-target="#waiter">Garçom</button></li>
+            <li class="nav-item"><button class="nav-link" id="tabBtn-kitchen" data-bs-toggle="tab" data-bs-target="#kitchen">Cozinha</button></li>
+            <li class="nav-item"><button class="nav-link" id="tabBtn-cashier" data-bs-toggle="tab" data-bs-target="#cashier">Caixa</button></li>
+            <li class="nav-item"><button class="nav-link" id="tabBtn-stock" data-bs-toggle="tab" data-bs-target="#stock">Estoque</button></li>
+            <li class="nav-item"><button class="nav-link" id="tabBtn-admin" data-bs-toggle="tab" data-bs-target="#admin">Administração</button></li>
+        </ul>
+
+        <div class="tab-content border border-top-0 rounded-bottom bg-white p-3">
+            <div class="tab-pane fade" id="waiter">
+                <h4>Lançar pedido da mesa</h4>
+                <form id="orderForm" class="row g-3">
+                    <div class="col-md-2">
+                        <label class="form-label">Mesa</label>
+                        <input type="number" min="1" class="form-control" id="tableNumber" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Nome do cliente</label>
+                        <input type="text" class="form-control" id="customerName" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Produto em estoque</label>
+                        <select class="form-select" id="productSelect" required></select>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">Qtd</label>
+                        <input type="number" min="1" value="1" class="form-control" id="quantity" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Preço unit.</label>
+                        <input type="text" class="form-control" id="unitPricePreview" readonly>
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Observações</label>
+                        <input type="text" class="form-control" id="notes" placeholder="Sem cebola, ponto da carne...">
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary" type="submit">Enviar para cozinha</button>
+                    </div>
+                </form>
+                <div id="waiterFeedback" class="mt-3"></div>
+
+                <hr>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="mb-0">Comandas em aberto</h5>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="loadWaiterOpenSessions()">Atualizar</button>
+                </div>
+                <input class="form-control mb-2" id="waiterOpenSearch" placeholder="Buscar por cliente ou mesa">
+                <div id="waiterOpenSessions" class="row g-3 mb-4"></div>
+
+                <p class="mb-1">
+                    <button class="btn btn-outline-dark btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#closedTicketsCollapse">
+                        Comandas finalizadas
+                    </button>
+                </p>
+                <div class="collapse" id="closedTicketsCollapse">
+                    <input class="form-control mb-2" id="waiterClosedSearch" placeholder="Buscar finalizadas por cliente ou mesa">
+                    <div id="waiterHistory" class="row g-3"></div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="kitchen">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="mb-0">Fila da cozinha</h4>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="loadKitchen()">Atualizar</button>
+                </div>
+                <div id="kitchenList" class="row g-3"></div>
+            </div>
+
+            <div class="tab-pane fade" id="cashier">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="mb-0">Comandas aguardando caixa</h4>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="loadCashier()">Atualizar</button>
+                </div>
+                <div id="cashierList" class="row g-3"></div>
+            </div>
+
+            <div class="tab-pane fade" id="stock">
+                <h4>Cadastro de produtos em estoque</h4>
+                <form id="stockForm" class="row g-3">
+                    <input type="hidden" id="editingProductId">
+                    <div class="col-md-4">
+                        <label class="form-label">Nome do produto</label>
+                        <input type="text" class="form-control" id="stockName" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Categoria</label>
+                        <select class="form-select" id="stockCategory" required>
+                            <option value="BEBIDAS">Bebidas</option>
+                            <option value="REFEICOES">Refeições</option>
+                            <option value="LANCHES">Lanches</option>
+                            <option value="SOBREMESAS">Sobremesas</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Preço unitário</label>
+                        <input type="number" step="0.01" min="0.01" class="form-control" id="stockPrice" required>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end gap-2">
+                        <button class="btn btn-success" type="submit">Salvar produto</button>
+                        <button class="btn btn-outline-secondary d-none" type="button" id="cancelStockEdit">Cancelar</button>
+                    </div>
+                </form>
+                <div id="stockFeedback" class="mt-3"></div>
+                <div class="mt-3" id="stockList"></div>
+            </div>
+
+            <div class="tab-pane fade" id="admin">
+                <h4>Gerenciamento de usuários</h4>
+                <form id="userForm" class="row g-3">
+                    <input type="hidden" id="editingUserId">
+                    <div class="col-md-3"><input class="form-control" id="userFullName" placeholder="Nome completo" required></div>
+                    <div class="col-md-2"><input class="form-control" id="userUsername" placeholder="Login" required></div>
+                    <div class="col-md-2"><input class="form-control" type="password" id="userPassword" placeholder="Senha" required></div>
+                    <div class="col-md-2">
+                        <select class="form-select" id="userRole" required>
+                            <option value="WAITER">Garçom</option>
+                            <option value="KITCHEN">Cozinha</option>
+                            <option value="CASHIER">Caixa</option>
+                            <option value="STOCK">Estoque</option>
+                            <option value="ADMIN">Administrador</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button class="btn btn-primary" type="submit">Salvar usuário</button>
+                        <button class="btn btn-outline-secondary d-none" id="cancelUserEdit" type="button">Cancelar</button>
+                    </div>
+                </form>
+                <div id="adminFeedback" class="mt-2"></div>
+                <div id="usersList" class="mt-3"></div>
+            </div>
         </div>
     </div>
 </div>

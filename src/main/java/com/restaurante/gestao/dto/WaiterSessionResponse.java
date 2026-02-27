@@ -9,6 +9,9 @@ import java.util.List;
 public record WaiterSessionResponse(
         Long sessionId,
         Integer tableNumber,
+        String customerName,
+        Long waiterId,
+        String waiterName,
         SessionStatus status,
         Boolean waiterFinalized,
         LocalDateTime openedAt,
