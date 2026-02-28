@@ -46,6 +46,20 @@ class RestaurantFlowIntegrationTest {
         mockMvc.perform(get("/api/kitchen/orders")
                         .header("X-User-Id", 3))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        mockMvc.perform(patch("/api/waiter/sessions/1/finalize")
+                        .header("X-User-Id", 2))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Existem itens ainda não enviados para cozinha"));
+
+        mockMvc.perform(patch("/api/waiter/sessions/1/send-to-kitchen")
+                        .header("X-User-Id", 2))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/kitchen/orders")
+                        .header("X-User-Id", 3))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].kitchenStatus").value("PENDING"));
 
         mockMvc.perform(patch("/api/waiter/sessions/1/finalize")
