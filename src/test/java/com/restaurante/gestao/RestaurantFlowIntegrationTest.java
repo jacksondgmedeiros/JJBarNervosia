@@ -60,7 +60,10 @@ class RestaurantFlowIntegrationTest {
         mockMvc.perform(get("/api/kitchen/orders")
                         .header("X-User-Id", 3))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].kitchenStatus").value("PENDING"));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].tableNumber").value(10))
+                .andExpect(jsonPath("$[0].items.length()").value(2))
+                .andExpect(jsonPath("$[0].items[0].kitchenStatus").value("PENDING"));
 
         mockMvc.perform(patch("/api/waiter/sessions/1/finalize")
                         .header("X-User-Id", 2))

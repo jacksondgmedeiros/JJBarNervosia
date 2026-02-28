@@ -209,14 +209,21 @@ async function loadKitchen() {
             <div class="card h-100 border-warning">
                 <div class="card-body">
                     <h5 class="card-title">Mesa ${order.tableNumber}</h5>
-                    <p class="mb-1"><strong>${order.itemName}</strong></p>
-                    <p class="mb-1">Qtd: ${order.quantity}</p>
-                    <p class="mb-1">Obs: ${order.notes || '-'}</p>
-                    <p class="mb-2">Status: <span class="badge text-bg-${order.kitchenStatus === 'PREPARING' ? 'primary' : 'secondary'}">${friendlyKitchenStatus(order.kitchenStatus)}</span></p>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-primary" onclick="updateKitchenStatus(${order.id}, 'PREPARING')">Preparando</button>
-                        <button class="btn btn-sm btn-success" onclick="updateKitchenStatus(${order.id}, 'DONE')">Concluído</button>
-                    </div>
+                    <p class="text-muted mb-2">Cliente: ${order.customerName}</p>
+                    <ul class="list-group list-group-flush">
+                        ${order.items.map((item) => `
+                            <li class="list-group-item px-0">
+                                <p class="mb-1"><strong>${item.itemName}</strong></p>
+                                <p class="mb-1">Qtd: ${item.quantity}</p>
+                                <p class="mb-1">Obs: ${item.notes || '-'}</p>
+                                <p class="mb-2">Status: <span class="badge text-bg-${item.kitchenStatus === 'PREPARING' ? 'primary' : 'secondary'}">${friendlyKitchenStatus(item.kitchenStatus)}</span></p>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="updateKitchenStatus(${item.id}, 'PREPARING')">Preparando</button>
+                                    <button class="btn btn-sm btn-success" onclick="updateKitchenStatus(${item.id}, 'DONE')">Concluído</button>
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
                 </div>
             </div>
         </div>

@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class RestaurantService {
@@ -119,12 +121,22 @@ public class RestaurantService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderTicketResponse> listKitchenTickets(Long userId) {
+    public List<KitchenOrderResponse> listKitchenOrders(Long userId) {
         requireUserRole(userId, UserRole.KITCHEN, UserRole.ADMIN);
-        return orderTicketRepository
+        Map<Long, List<OrderTicket>> ticketsBySession = orderTicketRepository
                 .findByKitchenStatusInOrderByCreatedAtAsc(List.of(KitchenStatus.PENDING, KitchenStatus.PREPARING))
                 .stream()
-                .map(this::toResponse)
+                .collect(Collectors.groupingBy(ticket -> ticket.getSession().getId()));
+
+        return ticketsBySession.values()
+                .stream()
+                .sorted((items1, items2) -> items1.get(0).getSession().getOpenedAt().compareTo(items2.get(0).getSession().getOpenedAt()))
+                .map(items -> new KitchenOrderResponse(
+                        items.get(0).getSession().getId(),
+                        items.get(0).getSession().getTableNumber(),
+                        items.get(0).getSession().getCustomerName(),
+                        items.stream().map(this::toResponse).toList()
+                ))
                 .toList();
     }
 

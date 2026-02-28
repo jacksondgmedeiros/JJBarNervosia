@@ -82,8 +82,8 @@ public class ApiController {
     }
 
     @GetMapping("/kitchen/orders")
-    public ResponseEntity<List<OrderTicketResponse>> kitchenOrders(@RequestHeader(USER_HEADER) Long userId) {
-        return ResponseEntity.ok(restaurantService.listKitchenTickets(userId));
+    public ResponseEntity<List<KitchenOrderResponse>> kitchenOrders(@RequestHeader(USER_HEADER) Long userId) {
+        return ResponseEntity.ok(restaurantService.listKitchenOrders(userId));
     }
 
     @PatchMapping("/kitchen/orders/{ticketId}")
