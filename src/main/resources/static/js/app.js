@@ -165,6 +165,7 @@ confirmCloseBtn.addEventListener('click', async () => {
 async function loadProducts() {
     const response = await apiFetch('/api/products');
     productsCache = await response.json();
+    const previouslySelectedProductId = productSelect.value;
 
     if (productsCache.length === 0) {
         productSelect.innerHTML = '<option value="">Sem produtos em estoque</option>';
@@ -176,6 +177,11 @@ async function loadProducts() {
     productSelect.innerHTML = productsCache.map((product) =>
         `<option value="${product.id}">${friendlyCategory(product.category)} • ${product.name}</option>`
     ).join('');
+
+    const selectedStillExists = productsCache.some((product) => String(product.id) === previouslySelectedProductId);
+    if (selectedStillExists) {
+        productSelect.value = previouslySelectedProductId;
+    }
     productSelect.dispatchEvent(new Event('change'));
 
     const grouped = groupBy(productsCache, 'category');
