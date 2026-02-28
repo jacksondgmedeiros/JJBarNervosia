@@ -10,4 +10,5 @@ import java.util.List;
 public interface OrderTicketRepository extends JpaRepository<OrderTicket, Long> {
     List<OrderTicket> findByKitchenStatusInOrderByCreatedAtAsc(List<KitchenStatus> statuses);
     List<OrderTicket> findBySessionOrderByCreatedAtAsc(TableSession session);
+    List<OrderTicket> findBySessionAndKitchenStatus(TableSession session, KitchenStatus kitchenStatus);
 }

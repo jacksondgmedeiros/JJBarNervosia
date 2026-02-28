@@ -73,6 +73,7 @@ public class RestaurantService {
         ticket.setQuantity(request.quantity());
         ticket.setUnitPrice(product.getUnitPrice());
         ticket.setNotes(request.notes());
+        ticket.setKitchenStatus(KitchenStatus.DRAFT);
 
         return toResponse(orderTicketRepository.save(ticket));
     }
@@ -180,6 +181,21 @@ public class RestaurantService {
     }
 
     @Transactional
+    public void sendSessionToKitchen(Long userId, Long sessionId) {
+        requireUserRole(userId, UserRole.WAITER, UserRole.ADMIN);
+        TableSession session = tableSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Comanda não encontrada"));
+
+        List<OrderTicket> draftTickets = orderTicketRepository.findBySessionAndKitchenStatus(session, KitchenStatus.DRAFT);
+        if (draftTickets.isEmpty()) {
+            throw new IllegalArgumentException("Não há novos itens para enviar para cozinha");
+        }
+
+        draftTickets.forEach(ticket -> ticket.setKitchenStatus(KitchenStatus.PENDING));
+        orderTicketRepository.saveAll(draftTickets);
+    }
+
+    @Transactional
     public void finalizeForCashier(Long userId, Long sessionId) {
         requireUserRole(userId, UserRole.WAITER, UserRole.ADMIN);
         TableSession session = tableSessionRepository.findById(sessionId)
@@ -187,6 +203,12 @@ public class RestaurantService {
         if (session.getStatus() != SessionStatus.OPEN) {
             throw new IllegalArgumentException("Comanda já está fechada");
         }
+
+        boolean hasDraftItems = !orderTicketRepository.findBySessionAndKitchenStatus(session, KitchenStatus.DRAFT).isEmpty();
+        if (hasDraftItems) {
+            throw new IllegalArgumentException("Existem itens ainda não enviados para cozinha");
+        }
+
         session.setWaiterFinalized(true);
         tableSessionRepository.save(session);
     }

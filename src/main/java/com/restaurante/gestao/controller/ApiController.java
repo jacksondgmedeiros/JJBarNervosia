@@ -67,6 +67,13 @@ public class ApiController {
         return ResponseEntity.ok(restaurantService.listTodayHistoryForWaiter(userId));
     }
 
+    @PatchMapping("/waiter/sessions/{sessionId}/send-to-kitchen")
+    public ResponseEntity<Map<String, String>> sendSessionToKitchen(@RequestHeader(USER_HEADER) Long userId,
+                                                                    @PathVariable Long sessionId) {
+        restaurantService.sendSessionToKitchen(userId, sessionId);
+        return ResponseEntity.ok(Map.of("message", "Comanda enviada para cozinha"));
+    }
+
     @PatchMapping("/waiter/sessions/{sessionId}/finalize")
     public ResponseEntity<Map<String, String>> finalizeForCashier(@RequestHeader(USER_HEADER) Long userId,
                                                                   @PathVariable Long sessionId) {

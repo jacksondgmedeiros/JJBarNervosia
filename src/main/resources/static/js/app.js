@@ -77,7 +77,7 @@ form.addEventListener('submit', async (event) => {
         });
         if (!response.ok) throw await toError(response, 'Erro ao lançar pedido.');
 
-        waiterFeedback.innerHTML = '<div class="alert alert-success">Pedido lançado com sucesso!</div>';
+        waiterFeedback.innerHTML = '<div class="alert alert-success">Item adicionado na comanda. Envie a comanda quando terminar.</div>';
         document.getElementById('quantity').value = '1';
         document.getElementById('notes').value = '';
         await refreshAllViews();
@@ -263,7 +263,10 @@ function renderWaiterOpenSessions() {
                     <ul class="list-group list-group-flush my-2">
                         ${session.items.map((item) => `<li class="list-group-item px-0">${item.quantity}x ${item.itemName} <span class="badge text-bg-${kitchenBadge(item.kitchenStatus)} ms-1">${friendlyKitchenStatus(item.kitchenStatus)}</span></li>`).join('')}
                     </ul>
-                    <button class="btn btn-sm btn-dark" ${session.waiterFinalized ? 'disabled' : ''} onclick="finalizeSession(${session.sessionId})">Finalizar e enviar ao caixa</button>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-sm btn-primary" ${session.waiterFinalized ? 'disabled' : ''} onclick="sendSessionToKitchen(${session.sessionId})">Enviar novos itens para cozinha</button>
+                        <button class="btn btn-sm btn-dark" ${session.waiterFinalized ? 'disabled' : ''} onclick="finalizeSession(${session.sessionId})">Finalizar e enviar ao caixa</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -296,6 +299,17 @@ function renderWaiterHistory() {
             </div>
         </div>
     `).join('');
+}
+
+async function sendSessionToKitchen(sessionId) {
+    const response = await apiFetch(`/api/waiter/sessions/${sessionId}/send-to-kitchen`, { method: 'PATCH' });
+    if (!response.ok) {
+        const error = await response.json();
+        waiterFeedback.innerHTML = `<div class="alert alert-danger">${error.error || 'Erro ao enviar comanda para cozinha.'}</div>`;
+        return;
+    }
+    waiterFeedback.innerHTML = '<div class="alert alert-success">Itens enviados para cozinha em lote.</div>';
+    await refreshAllViews();
 }
 
 async function finalizeSession(sessionId) {
@@ -487,11 +501,11 @@ function friendlyCategory(category) {
 }
 
 function friendlyKitchenStatus(status) {
-    return { PENDING: 'Em fila', PREPARING: 'Preparando', DONE: 'Concluído' }[status] || status;
+    return { DRAFT: 'Aguardando envio', PENDING: 'Em fila', PREPARING: 'Preparando', DONE: 'Concluído' }[status] || status;
 }
 
 function kitchenBadge(status) {
-    return { PENDING: 'secondary', PREPARING: 'primary', DONE: 'success' }[status] || 'secondary';
+    return { DRAFT: 'warning', PENDING: 'secondary', PREPARING: 'primary', DONE: 'success' }[status] || 'secondary';
 }
 
 function groupBy(items, key) {
